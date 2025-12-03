@@ -1,4 +1,5 @@
 use std::fs;
+use std::process::exit;
 
 fn main() {
     // I should check if the arg is a directory or a file but its fine
@@ -9,12 +10,12 @@ fn main() {
             Ok(v) => {
                 if !v {
                     eprintln!("Directory doesn't exist");
-                    std::process::exit(1);
+                    exit(1);
                 }
             }
             Err(e) => {
                 eprintln!("Directory doesn't exist error: {}", e);
-                std::process::exit(1);
+                exit(1);
             }
         }
         if args[1].contains("/") {
@@ -43,7 +44,7 @@ fn print_dir(path: &str, generation: i32) {
                     Ok(v) => entry = v,
                     Err(e) => {
                         eprintln!("Illegal file/directory access error: {}", e);
-                        std::process::exit(1);
+                        exit(1);
                     }
                 }
                 if entry.file_type().unwrap().is_dir() {
@@ -65,7 +66,7 @@ fn print_dir(path: &str, generation: i32) {
         }
         Err(e) => {
             eprintln!("Illegal file/directory access error: {}", e);
-            std::process::exit(1);
+            exit(1);
         }
     }
 }
