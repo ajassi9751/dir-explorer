@@ -5,6 +5,18 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     // Maybe I should include multiple arguments but maybe not
     if 1 < args.len() {
+        match fs::exists(&args[1].as_str()) {
+            Ok(v) => {
+                if !v {
+                    eprintln!("Directory doesn't exist");
+                    std::process::exit(1);
+                }
+            }
+            Err(e) => {
+                eprintln!("Directory doesn't exist error: {}", e);
+                std::process::exit(1);
+            }
+        }
         if args[1].contains("/") {
             println!("{}", &args[1].as_str());
         } else {
@@ -12,7 +24,7 @@ fn main() {
         }
         print_dir(&args[1].as_str(), 0);
     } else {
-        println!("./");
+        println!("\x1b[36m./\x1b[0m");
         print_dir(".", 0);
     }
 }
@@ -29,11 +41,15 @@ fn print_dir(path: &str, generation: i32) {
                 let entry;
                 match ientry {
                     Ok(v) => entry = v,
-                    Err(e) => panic!("Illegal file/directory access error: {}", e),
+                    Err(e) => {
+                        eprintln!("Illegal file/directory access error: {}", e);
+                        std::process::exit(1);
+                    }
                 }
                 if entry.file_type().unwrap().is_dir() {
                     println!(
-                        "{} {}/",
+                        // "\x1b[93m{} {}/\x1b[0m",
+                        "{} \x1b[36m{}/\x1b[0m",
                         tabs.clone() + &ending_part,
                         entry.file_name().to_string_lossy()
                     ); // I should instead use a buffered technique but this works for now
@@ -47,6 +63,9 @@ fn print_dir(path: &str, generation: i32) {
                 }
             }
         }
-        Err(e) => panic!("Illegal file/directory access error: {}", e),
+        Err(e) => {
+            eprintln!("Illegal file/directory access error: {}", e);
+            std::process::exit(1);
+        }
     }
 }
