@@ -19,9 +19,9 @@ fn main() {
             }
         }
         if args[1].contains("/") {
-            println!("{}", &args[1].as_str());
+            println!("\x1b[36m{}\x1b[0m", &args[1].as_str());
         } else {
-            println!("{}/", &args[1].as_str());
+            println!("\x1b[36m{}/\x1b[0m", &args[1].as_str());
         }
         print_dir(&args[1].as_str(), 0);
     } else {
