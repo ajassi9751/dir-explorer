@@ -6,7 +6,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     // Maybe I should include multiple arguments but maybe not
     if 1 < args.len() {
-        match fs::exists(&args[1].as_str()) {
+        match fs::exists(&args[1]) {
             Ok(v) => {
                 if !v {
                     eprintln!("Directory doesn't exist");
@@ -18,12 +18,17 @@ fn main() {
                 exit(1);
             }
         }
-        if args[1].contains("/") {
-            println!("\x1b[36m{}\x1b[0m", &args[1].as_str());
-        } else {
-            println!("\x1b[36m{}/\x1b[0m", &args[1].as_str());
+        let test = std::path::Path::new(&args[1]);
+        if !test.is_dir() {
+            eprintln!("Path entered is not a directory");
+            exit(1);
         }
-        print_dir(&args[1].as_str(), 0);
+        if args[1].contains("/") {
+            println!("\x1b[36m{}\x1b[0m", args[1]);
+        } else {
+            println!("\x1b[36m{}/\x1b[0m", args[1]);
+        }
+        print_dir(args[1].as_str(), 0);
     } else {
         println!("\x1b[36m./\x1b[0m");
         print_dir(".", 0);
