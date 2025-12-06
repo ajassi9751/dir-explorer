@@ -42,6 +42,8 @@ fn print_dir(path: &str, generation: u32) {
     for _i in 0..generation {
         tabs += "|  ";
     }
+    // The printing may or may not be in random order which may or may not cause issues
+    // I may need a more complex solution, leveraging std-async await
     match fs::read_dir(path) {
         Ok(entries) => {
             // Sadly we must use vecs with rayon
