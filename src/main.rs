@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::fs;
 use std::process::exit;
 
@@ -35,7 +36,7 @@ fn main() {
     }
 }
 
-fn print_dir(path: &str, generation: i32) {
+fn print_dir(path: &str, generation: u32) {
     let ending_part: String = "└──".to_string();
     let mut tabs: String = "".to_string();
     for _i in 0..generation {
@@ -43,7 +44,9 @@ fn print_dir(path: &str, generation: i32) {
     }
     match fs::read_dir(path) {
         Ok(entries) => {
-            for ientry in entries {
+            // Sadly we must use vecs with rayon
+            let ventries: Vec<_> = entries.collect();
+            ventries.into_par_iter().for_each(|ientry| {
                 let entry;
                 match ientry {
                     Ok(v) => entry = v,
@@ -52,7 +55,19 @@ fn print_dir(path: &str, generation: i32) {
                         exit(1);
                     }
                 }
-                if entry.file_type().unwrap().is_dir() {
+                // Most digusting name I have seen
+                let mut _isit_dir: bool = false;
+                match entry.file_type() {
+                    Ok(v) => _isit_dir = v.is_dir(),
+                    Err(e) => {
+                        eprintln!(
+                            "Error determining if it is a file or directory error: {}",
+                            e
+                        );
+                        exit(1)
+                    }
+                }
+                if _isit_dir {
                     println!(
                         // "\x1b[93m{} {}/\x1b[0m",
                         "{} \x1b[36m{}/\x1b[0m",
@@ -67,7 +82,7 @@ fn print_dir(path: &str, generation: i32) {
                         entry.file_name().to_string_lossy()
                     );
                 }
-            }
+            });
         }
         Err(e) => {
             eprintln!("Illegal file/directory access error: {}", e);
