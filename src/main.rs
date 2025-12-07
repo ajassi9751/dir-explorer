@@ -1,6 +1,8 @@
 use std::fs;
 use std::process::exit;
 
+// Could convert the program to only show the current directory like ls does and just be able to
+// jump through, probalby have one default behavior and one option, also make -a and option
 fn main() {
     // I should check if the arg is a directory or a file but its fine
     let args: Vec<String> = std::env::args().collect();
@@ -36,10 +38,12 @@ fn main() {
 }
 
 fn print_dir(path: &str, generation: i32) {
-    let ending_part: String = "└──".to_string();
+    // let ending_part: String = "└──".to_string();
+    let ending_part: String = "└─".to_string();
     let mut tabs: String = "".to_string();
     for _i in 0..generation {
-        tabs += "|  ";
+        // tabs += "|  ";
+        tabs += "   ";
     }
     match fs::read_dir(path) {
         Ok(entries) => {
@@ -58,7 +62,8 @@ fn print_dir(path: &str, generation: i32) {
                         "{} \x1b[36m{}/\x1b[0m",
                         tabs.clone() + &ending_part,
                         entry.file_name().to_string_lossy()
-                    ); // I should instead use a buffered technique but this works for now
+                    );
+                    // I should instead use a buffered technique but this works for now
                     print_dir(entry.path().display().to_string().as_str(), generation + 1);
                 } else {
                     println!(
