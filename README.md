@@ -1,4 +1,4 @@
-A small project to let you see your directory structure, should be cross platform!
+A small project built in rust to let you see your directory structure, should be cross platform!
 
 To get set up:
 ``` sh

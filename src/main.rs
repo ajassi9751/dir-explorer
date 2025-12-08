@@ -56,14 +56,25 @@ fn print_dir(path: &str, generation: i32) {
                         exit(1);
                     }
                 }
-                if entry.file_type().unwrap().is_dir() {
+                // Most digusting name I have seen
+                let mut _isit_dir: bool = false;
+                match entry.file_type() {
+                    Ok(v) => _isit_dir = v.is_dir(),
+                    Err(e) => {
+                        eprintln!(
+                            "Error determining if it is a file or directory error: {}",
+                            e
+                        );
+                        exit(1)
+                    }
+                }
+                if _isit_dir {
                     println!(
                         // "\x1b[93m{} {}/\x1b[0m",
                         "{} \x1b[36m{}/\x1b[0m",
                         tabs.clone() + &ending_part,
                         entry.file_name().to_string_lossy()
-                    );
-                    // I should instead use a buffered technique but this works for now
+                    ); // I should instead use a buffered technique but this works for now
                     print_dir(entry.path().display().to_string().as_str(), generation + 1);
                 } else {
                     println!(
@@ -71,7 +82,7 @@ fn print_dir(path: &str, generation: i32) {
                         tabs.clone() + &ending_part,
                         entry.file_name().to_string_lossy()
                     );
-                }
+                } 
             }
         }
         Err(e) => {
