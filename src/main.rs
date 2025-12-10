@@ -59,6 +59,9 @@ fn main() {
         println!("\x1b[36m./\x1b[0m");
         print_dir(".", 0);
     }
+    let mut tree: Node<String> = Node::new(String::from("."));
+    collect_dir_node(".", &mut tree);
+    print_nodes(&tree, 0);
 }
 
 // Need to make another function that takes a &mut Tree but maybe tree inst even a needed data type
@@ -117,4 +120,88 @@ fn print_dir(path: &str, generation: u32) {
             exit(1);
         }
     }
+}
+
+// I know String is bad
+fn collect_dir_node (path: &str, node: &mut Node<String>) {
+    match fs::read_dir(path) {
+        Ok(entries) => {
+            for ientry in entries {
+                let entry;
+                match ientry {
+                    Ok(v) => {
+                        entry = v; 
+                        // Most digusting name I have seen
+                        let mut _isit_dir: bool = false;
+                        match entry.file_type() {
+                            Ok(v) => _isit_dir = v.is_dir(),
+                            Err(e) => {
+                                eprintln!(
+                                    "Error determining if it is a file or directory error: {}",
+                                    e
+                                );
+                                cleanup(1)
+                            }
+                        }
+                        if _isit_dir {
+                            node.add_node(entry.file_name().to_string_lossy().into_owned());
+                            match node.get_node_mut(node.get_children().len()-1) {
+                                Some(v) => collect_dir_node(entry.path().display().to_string().as_str(), v),
+                                None => {
+                                    eprintln!("Error traversing tree");
+                                    cleanup(1)
+                                }
+                            } 
+                        } else {
+                            node.add_node(entry.file_name().to_string_lossy().into_owned());
+                        } 
+                    },
+                    Err(e) => {
+                        eprintln!("Illegal file/directory access error: {}", e);
+                        cleanup(1);
+                    },
+                }
+            }
+        },
+        Err(e) => {
+            eprintln!("Illegal file/directory access error: {}", e);
+            exit(1);
+        }
+    }
+}
+
+fn print_nodes (node: &Node<String>, generation: u32) { 
+    if generation == 0 {
+        println!("\x1b[36m{}/\x1b[0m", node.get_val());
+        if !node.get_children().is_empty() {
+            for n in node.get_children() {
+                print_nodes(n, 1);
+            }
+        }
+    }
+    else {
+        let gener = generation - 1;
+        let ending_part: String = "└─".to_string();
+        let mut tabs: String = "".to_string();
+        for _i in 0..gener {
+            // tabs += "|  ";
+            tabs += "   ";
+        }
+        if node.get_children().is_empty() {
+            println!("{} {}", tabs.clone() + &ending_part, node.get_val());
+        }
+        else {
+            println!("{} \x1b[36m{}/\x1b[0m", tabs.clone() + &ending_part, node.get_val());
+            // println!("{}", node.get_children().len());
+            for n in node.get_children() { 
+                print_nodes(n, gener + 2);
+            }
+        }
+    }
+}
+
+// Make this a macro?
+fn cleanup (error: i32) {
+    endwin();
+    exit(error);
 }

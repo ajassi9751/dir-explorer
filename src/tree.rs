@@ -5,9 +5,17 @@ pub struct Tree <T> {
 }
 
 pub struct Node <T> {
+    // is_root: bool // Maybe add to get rid of Tree, or use an enum
     value: T,
     children: Vec<Node<T>> // Make use of .if_empty() to see if it is a file or folder
 }
+
+// pub enum Nodetype <T> {
+//  NODE(Node<T>),
+//  ROOT(Node<T>)
+//  LEAF(Node<T>) // A node that has no children
+    // Maybe make a a separate type for a leaf becuase it shouldn't have children
+//}
 
 impl <T> Tree <T> {
     pub fn new (data: T) -> Tree <T> {
