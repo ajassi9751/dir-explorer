@@ -2,7 +2,6 @@ use ncurses::*; // Bad but fine`
 use std::fs;
 use std::process::exit;
 mod tree;
-use tree::Tree;
 use tree::Node;
 
 // Could convert the program to only show the current directory like ls does and just be able to
