@@ -5,7 +5,7 @@ mod tree;
 use tree::Node;
 
 // Could convert the program to only show the current directory like ls does and just be able to
-// jump through, probalby have one default behavior and one option, also make -a and option
+// jump through, probably have one default behavior and one option, also make -a and option
 // I first need to organize the project to collect the directories into a data structure (a tree) instead of printing
 // Then use ncurses to render the TUI and implement the jump functionality (use std::env::set_current_dir for this)
 fn main() {
@@ -24,11 +24,8 @@ fn main() {
     // attroff(A_BOLD);
     // getch();
     // endwin();
-    // let mut _test: Tree<&str> = Tree::new("Hi");
-    // _test.add_node("Hi!");
-    // _test.get_node_mut(0).unwrap().add_node("Lol");
-    // println!("{}", _test.get_node(0).unwrap().get_node(0).unwrap().get_val());
     let args: Vec<String> = std::env::args().collect();
+    let mut tree: Node<String>;
     // Maybe I should include multiple arguments but maybe not
     if 1 < args.len() {
         match fs::exists(&args[1]) {
@@ -54,12 +51,14 @@ fn main() {
             println!("\x1b[36m{}/\x1b[0m", args[1]);
         }
         print_dir(args[1].as_str(), 0);
+        tree = Node::new(String::from(args[1].as_str()));
+        collect_dir_node(args[1].as_str(), &mut tree);
     } else {
         println!("\x1b[36m./\x1b[0m");
         print_dir(".", 0);
+        tree = Node::new(String::from("."));
+        collect_dir_node(".", &mut tree);
     }
-    let mut tree: Node<String> = Node::new(String::from("."));
-    collect_dir_node(".", &mut tree);
     print_nodes(&tree, 0);
 }
 
@@ -171,7 +170,12 @@ fn collect_dir_node (path: &str, node: &mut Node<String>) {
 
 fn print_nodes (node: &Node<String>, generation: u32) { 
     if generation == 0 {
-        println!("\x1b[36m{}/\x1b[0m", node.get_val());
+        if node.get_val().contains("/") {
+            println!("\x1b[36m{}\x1b[0m", node.get_val());
+        }
+        else {
+            println!("\x1b[36m{}/\x1b[0m", node.get_val());
+        }
         if !node.get_children().is_empty() {
             for n in node.get_children() {
                 print_nodes(n, 1);
