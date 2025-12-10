@@ -23,7 +23,6 @@ fn main() {
     // attroff(COLOR_PAIR(1));
     // attroff(A_BOLD);
     // getch();
-    // endwin();
     let args: Vec<String> = std::env::args().collect();
     let mut tree: Node<String>;
     // Maybe I should include multiple arguments but maybe not
@@ -60,6 +59,7 @@ fn main() {
         collect_dir_node(".", &mut tree);
     }
     print_nodes(&tree, 0);
+    // endwin();
 }
 
 // Need to make another function that takes a &mut Tree but maybe tree inst even a needed data type
