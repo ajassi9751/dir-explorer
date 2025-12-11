@@ -9,13 +9,12 @@ use tree::Node;
 // I first need to organize the project to collect the directories into a data structure (a tree) instead of printing
 // Then use ncurses to render the TUI and implement the jump functionality (use std::env::set_current_dir for this)
 fn main() {
-    // Test
-    // initscr();
-    // if !has_colors() {
-    //     eprintln!("Terminal doesn't have color support");
-    //     exit(1);
-    // }
-    // start_color();
+    initscr();
+    if !has_colors() {
+        eprintln!("Terminal doesn't have color support");
+        exit(1);
+    }
+    start_color();
     // init_pair(1, COLOR_RED, COLOR_BLUE); // This highlights the text but doesn't change the color :(
     // attron(COLOR_PAIR(1));
     // attron(A_BOLD);
@@ -44,26 +43,27 @@ fn main() {
             eprintln!("Path entered is not a directory");
             exit(1);
         }
-        if args[1].contains("/") {
-            println!("\x1b[36m{}\x1b[0m", args[1]);
-        } else {
-            println!("\x1b[36m{}/\x1b[0m", args[1]);
-        }
-        print_dir(args[1].as_str(), 0);
+        // if args[1].contains("/") {
+        //     println!("\x1b[36m{}\x1b[0m", args[1]);
+        // } else {
+        //     println!("\x1b[36m{}/\x1b[0m", args[1]);
+        // }
+        // print_dir(args[1].as_str(), 0);
         tree = Node::new(String::from(args[1].as_str()));
         collect_dir_node(args[1].as_str(), &mut tree);
     } else {
-        println!("\x1b[36m./\x1b[0m");
-        print_dir(".", 0);
+        // println!("\x1b[36m./\x1b[0m");
+        // print_dir(".", 0);
         tree = Node::new(String::from("."));
         collect_dir_node(".", &mut tree);
     }
     print_nodes(&tree, 0);
-    // endwin();
+    print_nodes_tui(&tree, 0);
+    getch();
+    endwin();
 }
 
 // Need to make another function that takes a &mut Tree but maybe tree inst even a needed data type
-// fn print_dir(path: &str, generation: u32, node: &mut Node) {
 fn print_dir(path: &str, generation: u32) {
     // Use this │ (Not the same as |)
     // let ending_part: String = "└──".to_string();
@@ -110,7 +110,7 @@ fn print_dir(path: &str, generation: u32) {
                         tabs.clone() + &ending_part,
                         entry.file_name().to_string_lossy()
                     );
-                } 
+                }
             }
         }
         Err(e) => {
@@ -121,14 +121,14 @@ fn print_dir(path: &str, generation: u32) {
 }
 
 // I know String is bad
-fn collect_dir_node (path: &str, node: &mut Node<String>) {
+fn collect_dir_node(path: &str, node: &mut Node<String>) {
     match fs::read_dir(path) {
         Ok(entries) => {
             for ientry in entries {
                 let entry;
                 match ientry {
                     Ok(v) => {
-                        entry = v; 
+                        entry = v;
                         // Most digusting name I have seen
                         let mut _isit_dir: bool = false;
                         match entry.file_type() {
@@ -143,24 +143,26 @@ fn collect_dir_node (path: &str, node: &mut Node<String>) {
                         }
                         if _isit_dir {
                             node.add_node(entry.file_name().to_string_lossy().into_owned());
-                            match node.get_node_mut(node.get_children().len()-1) {
-                                Some(v) => collect_dir_node(entry.path().display().to_string().as_str(), v),
+                            match node.get_node_mut(node.get_children().len() - 1) {
+                                Some(v) => {
+                                    collect_dir_node(entry.path().display().to_string().as_str(), v)
+                                }
                                 None => {
                                     eprintln!("Error traversing tree");
                                     cleanup(1)
                                 }
-                            } 
+                            }
                         } else {
                             node.add_node(entry.file_name().to_string_lossy().into_owned());
-                        } 
-                    },
+                        }
+                    }
                     Err(e) => {
                         eprintln!("Illegal file/directory access error: {}", e);
                         cleanup(1);
-                    },
+                    }
                 }
             }
-        },
+        }
         Err(e) => {
             eprintln!("Illegal file/directory access error: {}", e);
             exit(1);
@@ -168,12 +170,11 @@ fn collect_dir_node (path: &str, node: &mut Node<String>) {
     }
 }
 
-fn print_nodes (node: &Node<String>, generation: u32) { 
+fn print_nodes(node: &Node<String>, generation: u32) {
     if generation == 0 {
         if node.get_val().contains("/") {
             println!("\x1b[36m{}\x1b[0m", node.get_val());
-        }
-        else {
+        } else {
             println!("\x1b[36m{}/\x1b[0m", node.get_val());
         }
         if !node.get_children().is_empty() {
@@ -181,8 +182,7 @@ fn print_nodes (node: &Node<String>, generation: u32) {
                 print_nodes(n, 1);
             }
         }
-    }
-    else {
+    } else {
         let gener = generation - 1;
         let ending_part: String = "└─".to_string();
         let mut tabs: String = "".to_string();
@@ -192,19 +192,56 @@ fn print_nodes (node: &Node<String>, generation: u32) {
         }
         if node.get_children().is_empty() {
             println!("{} {}", tabs.clone() + &ending_part, node.get_val());
-        }
-        else {
-            println!("{} \x1b[36m{}/\x1b[0m", tabs.clone() + &ending_part, node.get_val());
+        } else {
+            println!(
+                "{} \x1b[36m{}/\x1b[0m",
+                tabs.clone() + &ending_part,
+                node.get_val()
+            );
             // println!("{}", node.get_children().len());
-            for n in node.get_children() { 
+            for n in node.get_children() {
                 print_nodes(n, gener + 2);
             }
         }
     }
 }
 
+fn print_nodes_tui(node: &Node<String>, generation: u32) {
+    if generation == 0 {
+        if node.get_val().contains("/") {
+            // println!("\x1b[36m{}\x1b[0m", node.get_val());
+            addstr(format!("{}\n", node.get_val()).as_str());
+        } else {
+            // println!("\x1b[36m{}/\x1b[0m", node.get_val());
+            addstr(format!("{}/\n", node.get_val()).as_str());
+        }
+        if !node.get_children().is_empty() {
+            for n in node.get_children() {
+                print_nodes_tui(n, 1);
+            }
+        }
+    } else {
+        let gener = generation - 1;
+        let ending_part: String = "└─".to_string();
+        let mut tabs: String = "".to_string();
+        for _i in 0..gener {
+            // tabs += "|  ";
+            tabs += "   ";
+        }
+        if node.get_children().is_empty() {
+            addstr(format!("{} {}\n", tabs.clone() + &ending_part, node.get_val()).as_str());
+        } else {
+            addstr(format!("{} {}/\n", tabs.clone() + &ending_part, node.get_val()).as_str());
+            // println!("{}", node.get_children().len());
+            for n in node.get_children() {
+                print_nodes_tui(n, gener + 2);
+            }
+        }
+    }
+}
+
 // Make this a macro?
-fn cleanup (error: i32) {
+fn cleanup(error: i32) {
     endwin();
     exit(error);
 }
